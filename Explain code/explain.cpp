@@ -1602,3 +1602,46 @@ void loop()
         delay(16);     // Chờ 16ms để kiểm soát tốc độ vòng lặp (~60 FPS)
     }
 }
+
+/*Đoạn code này là một chương trình điều khiển dải LED NeoPixel sử dụng Arduino,
+với hai chế độ hoạt động chính được chuyển đổi bằng tín hiệu hồng ngoại (IR) từ remote:
+chế độ điều khiển bằng IR (code 1) và chế độ phản ứng với âm thanh (code 2).
+Logic của chương trình được triển khai tuần tự bắt đầu từ phần khởi tạo trong hàm setup(),
+nơi giao tiếp Serial được thiết lập với tốc độ 9600 baud để debug,
+bộ nhận tín hiệu IR được khởi động tại chân 7 với đèn phản hồi,
+và dải LED NeoPixel được khởi tạo với 12 LED tại chân 3, độ sáng ban đầu là 150.
+Các chân nút nhấn (BUTTON_1, BUTTON_2, BUTTON_3) được cấu hình làm đầu vào với pull-up nội để
+sẵn sàng nhận tín hiệu từ phần cứng.
+
+Sau khi khởi tạo, chương trình đi vào vòng lặp chính loop(),
+nơi biến toàn cục mode (khởi tạo là true) quyết định chế độ hoạt động.
+Nếu mode là true, chương trình chạy chế độ code 1:
+đầu tiên, hàm handleIR() được gọi để kiểm tra tín hiệu từ remote.
+Hàm này giải mã tín hiệu IR, in thông tin debug qua Serial (mã HEX và giao thức),
+và xử lý các lệnh như bật/tắt LED (nút Power - 0xBA45FF00),
+tăng/giảm độ sáng (nút Plus/Minus - 0xBF40FF00/0xE619FF00),
+chuyển đổi màu (nút Right/Left - 0xF609FF00/0xF807FF00),
+hoặc chọn hiệu ứng animation từ 0 đến 10 (các nút số 0-9 và C).
+Nút Menu (0xB847FF00) đảo giá trị mode để chuyển sang code 2.
+Nếu hiệu ứng test (nút Test - 0xBB44FF00) được kích hoạt, hàm updateTestEffect() chạy,
+nhấp nháy 4 màu trong 2 giây. Khi LED bật (ledOn = true),
+nếu ở chế độ animation (animationMode = true) và đang phát (animationPlaying = true),
+hàm updateAnimation() chọn và thực thi hiệu ứng tương ứng (từ updateEffect0() đến updateEffect10()),
+như cầu vồng quay, thở, nhấp nháy xen kẽ, hay chuyển màu dần đều,
+mỗi hiệu ứng sử dụng thời gian thực (millis()) để tạo chuyển động mượt mà.
+
+Ngược lại, nếu mode là false, chương trình chuyển sang chế độ code 2,
+tập trung vào phản ứng với âm thanh.
+Đầu tiên, handleIR() vẫn được gọi để cho phép chuyển chế độ bằng nút Menu.
+Tiếp theo, giá trị âm lượng (volume) được đọc từ chân A0, trừ đi 126 để chuẩn hóa,
+và được lọc để loại bỏ nhiễu (nếu nhỏ hơn nửa trung bình âm lượng hoặc dưới 15 thì đặt về 0).
+Trung bình âm lượng (avgVol) và âm lượng tối đa (maxVol) được cập nhật để chuẩn hóa tín hiệu.
+Hàm CyclePalette() kiểm tra thời gian (38 giây) để tự động chuyển palette màu nếu shuffle = true,
+trong khi CycleVisual() cho phép chuyển đổi hiệu ứng visual bằng nút BUTTON_2 hoặc tự động sau 38 giây.
+"Bump" (tăng đột ngột âm lượng) được phát hiện bằng cách so sánh volume với last,
+cập nhật trung bình bump (avgBump) và thời gian giữa các bump (avgTime).
+Hàm Visualize() sau đó chọn một trong 6 hiệu ứng âm thanh:
+(VU, VUdot, VU1, VU2, Pulse, Traffic, PaletteDance) dựa trên biến visual.
+Các hiệu ứng này sử dụng tín hiệu âm thanh để điều khiển LED, như vẽ thanh VU từ dưới lên,
+tạo chấm di chuyển, hay nhấp nháy theo nhịp. Gradient (gradient) tăng dần để tạo hiệu ứng chuyển động,
+và vòng lặp chờ 16ms để duy trì tốc độ khoảng 60 FPS.*/
